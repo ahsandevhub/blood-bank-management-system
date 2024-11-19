@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation"; // Import useRouter hook
 import { useState } from "react";
 
 const LoginPage = () => {
@@ -7,6 +8,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter(); // Initialize the router for redirection
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,7 +30,8 @@ const LoginPage = () => {
         setMessage("Login successful!");
         // Store the token securely (e.g., in cookies or localStorage)
         localStorage.setItem("token", data.token);
-        // Redirect or handle success
+        // Redirect to the dashboard page after successful login
+        router.push("/dashboard");
       } else {
         setMessage(data.error || "Invalid credentials. Please try again.");
       }

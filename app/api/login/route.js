@@ -1,72 +1,62 @@
 import db from "@/app/lib/db.js";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const { username, password } = await request.json();
+    // Parse the request body
+    const { username, password } = await req.json();
 
-    // Validate request body
+    // Validate required fields
     if (!username || !password) {
-      return new Response(
-        JSON.stringify({ error: "Username and password are required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+      return new NextResponse(
+        JSON.stringify({ message: "Username and password are required" }),
+        { status: 400 }
       );
     }
 
-    // Get connection from the pool
-    const connection = await db.getConnection();
+    // Query the database for the user
+    const [rows] = await db.execute("SELECT * FROM users WHERE username = ?", [
+      username,
+    ]);
 
-    try {
-      // Query user by username
-      const [rows] = await connection.execute(
-        "SELECT * FROM users WHERE username = ?",
-        [username]
+    // Check if the user exists
+    if (rows.length === 0) {
+      return new NextResponse(
+        JSON.stringify({ message: "Invalid username or password" }),
+        { status: 401 }
       );
-
-      // Check if the user exists
-      if (rows.length === 0) {
-        return new Response(
-          JSON.stringify({ error: "Invalid username or password" }),
-          { status: 401, headers: { "Content-Type": "application/json" } }
-        );
-      }
-
-      const user = rows[0];
-
-      // Verify the password
-      const passwordMatch = await bcrypt.compare(password, user.password);
-
-      if (!passwordMatch) {
-        return new Response(
-          JSON.stringify({ error: "Invalid username or password" }),
-          { status: 401, headers: { "Content-Type": "application/json" } }
-        );
-      }
-
-      // Generate JWT token
-      const token = jwt.sign(
-        { id: user.id, username: user.username },
-        JWT_SECRET,
-        { expiresIn: "1h" }
-      );
-
-      // Return the token
-      return new Response(
-        JSON.stringify({ token, message: "Login successful" }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
-    } finally {
-      // Always release the connection back to the pool
-      connection.release();
     }
+
+    const user = rows[0];
+
+    // Check the password directly (in plain text)
+    if (password !== user.password) {
+      return new NextResponse(
+        JSON.stringify({ message: "Invalid username or password" }),
+        { status: 401 }
+      );
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Return the token and success message
+    return new NextResponse(
+      JSON.stringify({ message: "Login successful", token }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Login API error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new NextResponse(
+      JSON.stringify({ message: "Internal server error" }),
+      { status: 500 }
+    );
   }
 }

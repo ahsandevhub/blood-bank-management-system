@@ -1,6 +1,5 @@
 "use client";
 
-import jwt from "jsonwebtoken";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -18,32 +17,46 @@ const DashboardLayout = ({ children }) => {
     { name: "Requests", path: "/dashboard/requests" },
   ];
 
-  // Function to validate the JWT token
-  const validateToken = () => {
+  // Function to validate the JWT token via API
+  const validateToken = async () => {
     const token = localStorage.getItem("token"); // Get token from localStorage or cookies
     if (!token) {
       return false; // No token, invalid
     }
 
     try {
-      // Validate the token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET); // You can use the same secret as in your API
-      return decoded ? true : false; // If decoded is truthy, token is valid
+      const response = await fetch("/api/validate-token", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.valid; // Return true if token is valid
+      } else {
+        return false; // Invalid token
+      }
     } catch (error) {
-      console.error("Invalid token:", error);
-      return false; // Invalid token
+      console.error("Error validating token:", error);
+      return false; // Error occurred during validation
     }
   };
 
   useEffect(() => {
     // On initial render, validate the token
-    const isValid = validateToken();
-    if (!isValid) {
-      router.push("/"); // Redirect to login if token is invalid or missing
-    } else {
-      setIsAuthenticated(true); // Token is valid
-    }
-    setIsLoading(false); // Finish loading after token validation
+    const checkToken = async () => {
+      const isValid = await validateToken();
+      if (!isValid) {
+        router.push("/"); // Redirect to login if token is invalid or missing
+      } else {
+        setIsAuthenticated(true); // Token is valid
+      }
+      setIsLoading(false); // Finish loading after token validation
+    };
+
+    checkToken();
   }, [router]);
 
   if (isLoading) {
