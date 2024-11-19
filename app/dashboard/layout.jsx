@@ -1,6 +1,5 @@
 "use client";
 
-import jwt from "jsonwebtoken";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -18,54 +17,71 @@ const DashboardLayout = ({ children }) => {
     { name: "Requests", path: "/dashboard/requests" },
   ];
 
-  // Function to validate the JWT token
-  const validateToken = () => {
-    const token = localStorage.getItem("token"); // Get token from localStorage or cookies
+  // Function to validate the token via API
+  const validateToken = async () => {
+    const token = localStorage.getItem("token");
     if (!token) {
-      return false; // No token, invalid
+      return false; // No token found
     }
 
     try {
-      // Validate the token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET); // You can use the same secret as in your API
-      return decoded ? true : false; // If decoded is truthy, token is valid
+      const response = await fetch("/api/auth/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.isValid;
+      }
+      return false; // Token is invalid
     } catch (error) {
-      console.error("Invalid token:", error);
-      return false; // Invalid token
+      console.error("Error validating token:", error);
+      return false;
     }
   };
 
+  // Logout function
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Remove token from localStorage
+    router.push("/"); // Redirect to the login page
+  };
+
   useEffect(() => {
-    // On initial render, validate the token
-    const isValid = validateToken();
-    if (!isValid) {
-      router.push("/"); // Redirect to login if token is invalid or missing
-    } else {
-      setIsAuthenticated(true); // Token is valid
-    }
-    setIsLoading(false); // Finish loading after token validation
+    const authenticate = async () => {
+      const isValid = await validateToken();
+      if (!isValid) {
+        router.push("/"); // Redirect to login if invalid
+      } else {
+        setIsAuthenticated(true); // Token is valid
+      }
+      setIsLoading(false); // Stop loading
+    };
+
+    authenticate(); // Validate token on mount
   }, [router]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p>Loading...</p> {/* You can replace this with a spinner */}
+        <p>Loading...</p>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return null; // Optionally render nothing until authentication is checked
+    return null; // Optionally render nothing until authenticated
   }
 
   return (
     <div className="min-h-screen flex bg-gray-100">
       {/* Sidebar */}
-      <aside className="sticky top-0 w-64 bg-red-700 text-white shadow-lg">
+      <aside className="sticky top-0 w-64 bg-red-700 text-white shadow-lg flex flex-col">
         <div className="p-4 font-bold text-xl text-center border-b border-red-500">
           Blood Bank System
         </div>
-        <nav className="mt-4">
+        <nav className="mt-4 flex-1">
           <ul className="space-y-2">
             {menuItems.map((item, index) => (
               <li key={index}>
@@ -81,11 +97,17 @@ const DashboardLayout = ({ children }) => {
             ))}
           </ul>
         </nav>
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="w-full px-4 py-3 bg-red-800 hover:bg-red-600 text-sm font-semibold text-center"
+        >
+          Logout
+        </button>
       </aside>
 
       {/* Main Content */}
       <div className="flex-1">
-        {/* Page Content */}
         <main>{children}</main>
       </div>
     </div>
