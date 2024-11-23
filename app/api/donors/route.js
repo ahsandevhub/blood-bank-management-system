@@ -21,7 +21,6 @@ export async function POST(req) {
       bloodType,
       medicalHistory,
       lastDonationDate,
-      status,
     } = donor;
 
     // Validate required fields
@@ -74,9 +73,20 @@ export async function POST(req) {
       );
     }
 
-    // Insert the donor data into the MySQL database
-    const defaultStatus = "active";
+    // Determine donor status based on last donation date
+    let status = "active"; // Default status is active
+    if (lastDonationDate) {
+      const lastDonation = new Date(lastDonationDate);
+      const diffTime = today - lastDonation;
+      const diffDays = diffTime / (1000 * 3600 * 24); // Convert milliseconds to days
 
+      // If last donation was within 120 days, mark donor as inactive
+      if (diffDays <= 120) {
+        status = "inactive";
+      }
+    }
+
+    // Insert the donor data into the MySQL database
     const [result] = await db.execute(
       "INSERT INTO donors (name, phone, email, city, address, gender, dob, bloodType, medicalHistory, lastDonationDate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
@@ -90,7 +100,7 @@ export async function POST(req) {
         bloodType,
         medicalHistory || null,
         lastDonationDate || null,
-        status || defaultStatus,
+        status,
       ]
     );
 
