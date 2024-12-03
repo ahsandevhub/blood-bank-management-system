@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation"; // Import useRouter hook
 import { useState } from "react";
 
@@ -116,6 +117,13 @@ const LoginPage = () => {
             {message}
           </p>
         )}
+        <p className="text-center mt-5">
+          Don&apos;t have account?{" "}
+          <Link className="text-red-500 hover:underline" href={"/register"}>
+            Resister
+          </Link>{" "}
+          now.
+        </p>
       </div>
     </div>
   );

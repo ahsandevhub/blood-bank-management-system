@@ -12,8 +12,8 @@ const UserDashboardLayout = ({ children }) => {
 
   const menuItems = [
     { name: "Home", path: "/user/dashboard" },
-    { name: "My Requests", path: "/user/dashboard/my-requests" },
-    { name: "Donation History", path: "/user/dashboard/donation-history" },
+    // { name: "My Requests", path: "/user/dashboard/my-requests" },
+    // { name: "Donation History", path: "/user/dashboard/donation-history" },
     { name: "Profile", path: "/user/dashboard/profile" },
   ];
 
