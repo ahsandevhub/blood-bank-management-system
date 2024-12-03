@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"; // Import useRouter hook
 import { useState } from "react";
 
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,12 +16,12 @@ const LoginPage = () => {
     setMessage("");
 
     try {
-      const response = await fetch("/api/login", {
+      const response = await fetch("/api/user-login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ phone, password }),
       });
 
       const data = await response.json();
@@ -29,9 +29,9 @@ const LoginPage = () => {
       if (response.ok) {
         setMessage("Login successful!");
         // Store the token securely (e.g., in cookies or localStorage)
-        localStorage.setItem("adminToken", data.token);
+        localStorage.setItem("userToken", data.token);
         // Redirect to the dashboard page after successful login
-        router.push("/dashboard");
+        router.push("/user/dashboard");
       } else {
         setMessage(data.error || "Invalid credentials. Please try again.");
       }
@@ -46,34 +46,34 @@ const LoginPage = () => {
   return (
     <div
       className="min-h-screen bg-gray-100 flex items-center justify-center bg-no-repeat bg-cover"
-      style={{ backgroundImage: "url('./images/bg2.png')" }}
+      style={{ backgroundImage: "url('../images/bg2.png')" }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-red-700 opacity-50"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-700 opacity-50"></div>
       <div className="relative z-10 bg-white/90 shadow-lg rounded-lg p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-red-700 mb-3">
+        <h2 className="text-2xl font-bold text-center text-blue-700 mb-3">
           Blood Bank Management System
         </h2>
         <h3 className="mb-5 text-lg font-bold flex justify-center">
-          <span className="bg-red-600 text-white py-2 px-5 rounded-lg">
-            Admin Login
+          <span className="bg-blue-600 text-white py-2 px-5 rounded-lg">
+            User Login
           </span>
         </h3>
         <form onSubmit={handleLogin}>
           <div className="mb-4">
             <label
-              htmlFor="username"
+              htmlFor="phone"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Username
+              Phone
             </label>
             <input
-              type="text"
-              id="username"
-              name="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="tel"
+              id="phone"
+              name="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="mb-4">
@@ -90,15 +90,15 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <button
             type="submit"
             className={`w-full ${
               loading
-                ? "bg-red-500 cursor-not-allowed"
-                : "bg-red-600 hover:bg-red-700"
+                ? "bg-blue-500 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             } text-white font-semibold py-2 rounded-lg transition duration-200`}
             disabled={loading}
           >
@@ -108,7 +108,9 @@ const LoginPage = () => {
         {message && (
           <p
             className={`mt-4 text-center ${
-              message.includes("successful") ? "text-green-600" : "text-red-600"
+              message.includes("successful")
+                ? "text-green-600"
+                : "text-blue-600"
             }`}
           >
             {message}

@@ -7,25 +7,25 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 export async function POST(req) {
   try {
     // Parse the request body
-    const { username, password } = await req.json();
+    const { phone, password } = await req.json();
 
     // Validate required fields
-    if (!username || !password) {
+    if (!phone || !password) {
       return new NextResponse(
-        JSON.stringify({ message: "Username and password are required" }),
+        JSON.stringify({ message: "Phone and password are required" }),
         { status: 400 }
       );
     }
 
     // Query the database for the user
-    const [rows] = await db.execute("SELECT * FROM admins WHERE username = ?", [
-      username,
+    const [rows] = await db.execute("SELECT * FROM users WHERE phone = ?", [
+      phone,
     ]);
 
     // Check if the user exists
     if (rows.length === 0) {
       return new NextResponse(
-        JSON.stringify({ message: "Invalid username or password" }),
+        JSON.stringify({ message: "Invalid phone or password" }),
         { status: 401 }
       );
     }
@@ -35,17 +35,15 @@ export async function POST(req) {
     // Check the password directly (in plain text)
     if (password !== user.password) {
       return new NextResponse(
-        JSON.stringify({ message: "Invalid username or password" }),
+        JSON.stringify({ message: "Invalid phone or password" }),
         { status: 401 }
       );
     }
 
     // Generate a JWT token
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const token = jwt.sign({ id: user.id, phone: user.phone }, JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
     // Return the token and success message
     return new NextResponse(

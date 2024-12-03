@@ -4,22 +4,22 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const DashboardLayout = ({ children }) => {
+const UserDashboardLayout = ({ children }) => {
   const pathname = usePathname(); // Get the current path
   const router = useRouter(); // Router for redirection
   const [isAuthenticated, setIsAuthenticated] = useState(false); // State to track authentication
   const [isLoading, setIsLoading] = useState(true); // Loading state to handle token validation
 
   const menuItems = [
-    { name: "Home", path: "/dashboard" },
-    { name: "Donor Management", path: "/dashboard/donors" },
-    { name: "Blood Stock", path: "/dashboard/blood-stock" },
-    { name: "Requests", path: "/dashboard/requests" },
+    { name: "Home", path: "/user/dashboard" },
+    { name: "My Requests", path: "/user/dashboard/my-requests" },
+    { name: "Donation History", path: "/user/dashboard/donation-history" },
+    { name: "Profile", path: "/user/dashboard/profile" },
   ];
 
   // Function to validate the token via API
   const validateToken = async () => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("userToken");
     if (!token) {
       return false; // No token found
     }
@@ -44,15 +44,15 @@ const DashboardLayout = ({ children }) => {
 
   // Logout function
   const handleLogout = () => {
-    localStorage.removeItem("adminToken"); // Remove token from localStorage
-    router.push("/"); // Redirect to the login page
+    localStorage.removeItem("userToken"); // Remove token from localStorage
+    router.push("/user"); // Redirect to the login page
   };
 
   useEffect(() => {
     const authenticate = async () => {
       const isValid = await validateToken();
       if (!isValid) {
-        router.push("/"); // Redirect to login if invalid
+        router.push("/user"); // Redirect to login if invalid
       } else {
         setIsAuthenticated(true); // Token is valid
       }
@@ -77,8 +77,8 @@ const DashboardLayout = ({ children }) => {
   return (
     <div className="min-h-screen flex bg-gray-100">
       {/* Sidebar */}
-      <aside className="sticky top-0 w-64 bg-red-700 text-white shadow-lg flex flex-col">
-        <div className="p-4 font-bold text-xl text-center border-b border-red-500">
+      <aside className="sticky top-0 w-64 bg-blue-700 text-white shadow-lg flex flex-col">
+        <div className="p-4 font-bold text-xl text-center border-b border-blue-500">
           Blood Bank System
         </div>
         <nav className="mt-4 flex-1">
@@ -88,7 +88,7 @@ const DashboardLayout = ({ children }) => {
                 <Link
                   href={item.path}
                   className={`block px-4 py-3 text-sm font-semibold ${
-                    pathname === item.path ? "bg-red-800" : "hover:bg-red-600"
+                    pathname === item.path ? "bg-blue-800" : "hover:bg-blue-600"
                   }`}
                 >
                   {item.name}
@@ -100,7 +100,7 @@ const DashboardLayout = ({ children }) => {
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="w-full px-4 py-3 bg-red-800 hover:bg-red-600 text-sm font-semibold text-center"
+          className="w-full px-4 py-3 bg-blue-800 hover:bg-blue-600 text-sm font-semibold text-center"
         >
           Logout
         </button>
@@ -114,4 +114,4 @@ const DashboardLayout = ({ children }) => {
   );
 };
 
-export default DashboardLayout;
+export default UserDashboardLayout;
