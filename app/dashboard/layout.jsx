@@ -12,8 +12,9 @@ const DashboardLayout = ({ children }) => {
 
   const menuItems = [
     { name: "Home", path: "/dashboard" },
+    { name: "Blood Stock Management", path: "/dashboard/blood-stock" },
     { name: "Donor Management", path: "/dashboard/donors" },
-    { name: "Blood Stock", path: "/dashboard/blood-stock" },
+    { name: "Registered Users", path: "/dashboard/registered-users" },
     { name: "Requests", path: "/dashboard/requests" },
   ];
 

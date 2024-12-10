@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 
@@ -8,6 +9,7 @@ const DonorDetailsPage = ({ params }) => {
   const router = useRouter();
   const [donor, setDonor] = useState(null);
   const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A"; // Handle null or undefined dates
@@ -60,6 +62,31 @@ const DonorDetailsPage = ({ params }) => {
 
     fetchDonorDetails();
   }, [id]);
+
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this donor?"
+    );
+    if (!confirmDelete) return;
+
+    setDeleting(true);
+
+    try {
+      const response = await fetch(`/api/donors/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete donor");
+      }
+
+      // Redirect to the donors list page or a relevant page
+      router.push("/dashboard/donors");
+    } catch (err) {
+      setError(err.message);
+      setDeleting(false);
+    }
+  };
 
   if (error) {
     return (
@@ -198,6 +225,25 @@ const DonorDetailsPage = ({ params }) => {
         <p className="text-lg text-gray-700">
           {donor.medicalHistory || "No medical history provided."}
         </p>
+      </div>
+
+      {/* Delete Button */}
+      <div className="flex justify-center gap-6 mt-6">
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className={`px-6 py-2 w-max font-medium hover:bg-red-600 bg-red-500 text-white rounded-lg ${
+            deleting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          {deleting ? "Deleting..." : "Confirm Delete"}
+        </button>
+        <Link
+          href={"/dashboard/donors"}
+          className={`px-4 py-2 col-span-2 text-center w-52 bg-blue-500 text-white hover:bg-blue-600 font-semibold rounded-lg shadow`}
+        >
+          Cancel
+        </Link>
       </div>
     </div>
   );

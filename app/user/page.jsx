@@ -120,7 +120,7 @@ const LoginPage = () => {
         <p className="text-center mt-5">
           Don&apos;t have account?{" "}
           <Link className="text-red-500 hover:underline" href={"/register"}>
-            Resister
+            Register
           </Link>{" "}
           now.
         </p>

@@ -15,6 +15,7 @@ const UserDashboardLayout = ({ children }) => {
     // { name: "My Requests", path: "/user/dashboard/my-requests" },
     // { name: "Donation History", path: "/user/dashboard/donation-history" },
     { name: "Profile", path: "/user/dashboard/profile" },
+    { name: "Requests", path: "/user/dashboard/requests" },
   ];
 
   // Function to validate the token via API

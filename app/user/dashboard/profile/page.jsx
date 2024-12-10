@@ -55,28 +55,61 @@ const UserProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto bg-white p-8 rounded-md shadow-md">
-        <h1 className="text-2xl font-bold text-gray-800">User Profile</h1>
-        <div className="mt-6">
-          <p className="text-lg font-semibold text-gray-600">Name:</p>
-          <p className="text-xl">{userData?.fullName || "N/A"}</p>
+      <header className="bg-white p-4 shadow rounded-md mb-6">
+        <h1 className="text-2xl font-bold text-blue-700">Profile Details</h1>
+      </header>
+      <div className="mx-auto bg-white p-8 rounded-md shadow-md">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">User Profile</h1>
+        <div className="overflow-hidden">
+          <table className="min-w-full bg-white border-collapse">
+            <tbody>
+              <tr className="border-b">
+                <th className="px-4 py-3 w-[300px] text-left border text-gray-600 font-semibold">
+                  Name
+                </th>
+                <td className="px-4 py-3 border text-gray-800">
+                  {userData?.fullName || "N/A"}
+                </td>
+              </tr>
+              <tr className="border-b">
+                <th className="px-4 py-3 w-[300px] text-left border text-gray-600 font-semibold">
+                  Phone
+                </th>
+                <td className="px-4 py-3 border text-gray-800">
+                  {userData?.phone || "N/A"}
+                </td>
+              </tr>
+              <tr className="border-b">
+                <th className="px-4 py-3 w-[300px] text-left border text-gray-600 font-semibold">
+                  Gender
+                </th>
+                <td className="px-4 py-3 border text-gray-800">
+                  {userData?.sex || "N/A"}
+                </td>
+              </tr>
+              <tr className="border-b">
+                <th className="px-4 py-3 w-[300px] text-left border text-gray-600 font-semibold">
+                  Blood Group
+                </th>
+                <td className="px-4 py-3 border text-gray-800">
+                  {userData?.bloodGroup || "N/A"}
+                </td>
+              </tr>
+              <tr className="border-b">
+                <th className="px-4 py-3 w-[300px] text-left border text-gray-600 font-semibold">
+                  Account created at
+                </th>
+                <td className="px-4 py-3 border text-gray-800">
+                  {new Date(userData?.createdAt).toLocaleDateString() || "N/A"}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div className="mt-4">
-          <p className="text-lg font-semibold text-gray-600">Phone:</p>
-          <p className="text-xl">{userData?.phone || "N/A"}</p>
-        </div>
-        <div className="mt-4">
-          <p className="text-lg font-semibold text-gray-600">Gender:</p>
-          <p className="text-xl">{userData?.sex || "N/A"}</p>
-        </div>
-        <div className="mt-4">
-          <p className="text-lg font-semibold text-gray-600">Blood Group:</p>
-          <p className="text-xl">{userData?.bloodGroup || "N/A"}</p>
-        </div>
-        <div className="mt-8">
+        <div className="mt-8 text-center">
           <a
             href="/user/dashboard"
-            className="inline-block bg-blue-700 text-white px-6 py-2 rounded-md text-center font-semibold hover:bg-blue-600"
+            className="inline-block bg-blue-700 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-600"
           >
             Back to Dashboard
           </a>
