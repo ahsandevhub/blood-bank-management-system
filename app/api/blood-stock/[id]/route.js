@@ -1,4 +1,4 @@
-import dbConnect from "@/app/lib/dbConnect";
+import dbConnect from "@/app/lib/db";
 import BloodStock from "@/app/models/bloodStock"; // Assuming you have the BloodStock model
 import { NextResponse } from "next/server";
 
