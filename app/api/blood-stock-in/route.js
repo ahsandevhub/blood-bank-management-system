@@ -1,59 +1,76 @@
-import db from "@/app/lib/db.js";
-import { NextResponse } from "next/server"; // Ensure you are importing NextResponse
+import dbConnect from "@/app/lib/db";
+import BloodStock from "@/app/models/bloodStock";
+import BloodStockIn from "@/app/models/bloodStockIn";
+import Request from "@/app/models/request"; // Assuming you have the Request model
+import { NextResponse } from "next/server";
 
 // Handle POST request to add a new blood stock
 export async function POST(req) {
   try {
+    await dbConnect(); // Connect to MongoDB
+
     const { bloodGroup, quantity } = await req.json();
 
     if (!bloodGroup || !quantity) {
-      return new Response(
+      return new NextResponse(
         JSON.stringify({ message: "Blood group and quantity are required" }),
         { status: 400 }
       );
     }
 
-    // Insert the incoming blood stock data into the blood_stock_in table
-    await db.execute(
-      "INSERT INTO blood_stock_in (bloodGroup, quantity) VALUES (?, ?)",
-      [bloodGroup, quantity]
+    // Insert the incoming blood stock data into the blood_stock_in collection
+    const newBloodStockIn = new BloodStockIn({ bloodGroup, quantity });
+    await newBloodStockIn.save();
+
+    // Update the blood stock in the main blood_stock collection by adding the quantity
+    const bloodStock = await BloodStock.findOneAndUpdate(
+      { bloodGroup: bloodGroup },
+      { $inc: { quantity: quantity } },
+      { upsert: true, new: true } // upsert: true creates the document if it doesn't exist
     );
 
-    // Update the blood stock in the main blood_stock table by adding the quantity
-    await db.execute(
-      "UPDATE blood_stock SET quantity = quantity + ? WHERE bloodGroup = ?",
-      [quantity, bloodGroup]
-    );
-
-    return new Response(
-      JSON.stringify({ message: "Blood stock added and updated successfully" }),
+    return new NextResponse(
+      JSON.stringify({
+        message: "Blood stock added and updated successfully",
+        bloodStock,
+        newBloodStockIn,
+      }),
       { status: 201 }
     );
   } catch (error) {
     console.error("Error adding blood stock:", error);
-    return new Response(JSON.stringify({ message: "Internal Server Error" }), {
-      status: 500,
-    });
+    return new NextResponse(
+      JSON.stringify({
+        message: "Internal Server Error",
+        error: error.message,
+      }),
+      { status: 500 }
+    );
   }
 }
 
 export async function GET(req) {
   try {
-    const [rows] = await db.query("SELECT * FROM blood_stock_in");
+    await dbConnect(); // Connect to MongoDB
+
+    const bloodStocksIn = await BloodStockIn.find({});
 
     // If no data is found, handle the empty response
-    if (rows.length === 0) {
-      return NextResponse.json(
-        { message: "No blood stock found" },
+    if (bloodStocksIn.length === 0) {
+      return new NextResponse(
+        JSON.stringify({ message: "No incoming blood stock found" }),
         { status: 404 }
       );
     }
 
-    return NextResponse.json(rows, { status: 200 });
+    return NextResponse.json(bloodStocksIn, { status: 200 });
   } catch (error) {
-    console.error("Error fetching blood stock:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
+    console.error("Error fetching incoming blood stock:", error);
+    return new NextResponse(
+      JSON.stringify({
+        error: "Internal Server Error",
+        details: error.message,
+      }),
       { status: 500 }
     );
   }
@@ -61,93 +78,74 @@ export async function GET(req) {
 
 export async function PUT(req) {
   try {
+    await dbConnect(); // Connect to MongoDB
+
     // Parse the incoming request body (assuming it's JSON)
     const { requestId } = await req.json(); // Assuming you provide the request ID to identify the request
     if (!requestId) {
-      return new Response(
+      return new NextResponse(
         JSON.stringify({ message: "Request ID is required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Check if the request exists in the 'requests' table
-    const [request] = await db.execute("SELECT * FROM requests WHERE id = ?", [
-      requestId,
-    ]);
+    // Check if the request exists in the 'requests' collection
+    const request = await Request.findById(requestId);
 
-    if (request.length === 0) {
-      return new Response(JSON.stringify({ message: "Request not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!request) {
+      return new NextResponse(
+        JSON.stringify({ message: "Request not found" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    const { blood_group, quantity } = request[0];
+    const { bloodGroup, quantity } = request;
 
-    // Check the availability in the 'blood_stock' table
-    const [stock] = await db.execute(
-      "SELECT * FROM blood_stock WHERE blood_group = ?",
-      [blood_group]
-    );
+    // Check the availability in the 'blood_stock' collection
+    const bloodStock = await BloodStock.findOne({ bloodGroup });
 
-    if (stock.length === 0) {
-      return new Response(
+    if (!bloodStock) {
+      return new NextResponse(
         JSON.stringify({ message: "Blood group not found in stock" }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 404, headers: { "Content-Type": "application/json" } }
       );
     }
 
     // Check if sufficient stock is available
-    const availableQty = stock[0].quantity;
+    const availableQty = bloodStock.quantity;
     if (availableQty < quantity) {
       // Insufficient stock, decline the request
-      await db.execute("UPDATE requests SET status = 'declined' WHERE id = ?", [
-        requestId,
-      ]);
+      await Request.findByIdAndUpdate(requestId, { status: "declined" });
 
-      return new Response(
+      return new NextResponse(
         JSON.stringify({
           message: "Request declined due to insufficient stock",
         }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
     // Update the status to 'approved' and decrease the quantity in stock
-    await db.execute("UPDATE requests SET status = 'approved' WHERE id = ?", [
-      requestId,
-    ]);
-    await db.execute(
-      "UPDATE blood_stock SET quantity = quantity - ? WHERE blood_group = ?",
-      [quantity, blood_group]
+    await Request.findByIdAndUpdate(requestId, { status: "approved" });
+    await BloodStock.findOneAndUpdate(
+      { bloodGroup },
+      { $inc: { quantity: -quantity } }
     );
 
-    return new Response(
+    return new NextResponse(
       JSON.stringify({ message: "Request approved and stock updated" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error updating request:", error);
 
     // Return error message with 500 status
-    return new Response(
-      JSON.stringify({ message: "Failed to update request" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+    return new NextResponse(
+      JSON.stringify({
+        message: "Failed to update request",
+        error: error.message,
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }

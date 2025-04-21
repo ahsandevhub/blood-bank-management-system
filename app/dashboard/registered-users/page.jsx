@@ -28,7 +28,7 @@ const RegisteredUsersPage = () => {
   // Filter users based on search query and status
   const filteredUsers = users.filter(
     (user) =>
-      (user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.phone.toLowerCase().includes(searchQuery.toLowerCase())) &&
       (selectedStatus ? user.status === selectedStatus : true)
   );
@@ -73,18 +73,16 @@ const RegisteredUsersPage = () => {
           </thead>
           <tbody>
             {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-100">
+              filteredUsers.map((user, index) => (
+                <tr key={user._id} className="hover:bg-gray-100">
                   <td className="p-4 border border-gray-200 text-center">
-                    {user.id}
+                    {index + 1}
                   </td>
-                  <td className="p-4 border border-gray-200">
-                    {user.fullName}
-                  </td>
+                  <td className="p-4 border border-gray-200">{user.name}</td>
                   <td className="p-4 border border-gray-200">{user.phone}</td>
-                  <td className="p-4 border border-gray-200">{user.sex}</td>
+                  <td className="p-4 border border-gray-200">{user.gender}</td>
                   <td className="p-4 border border-gray-200">
-                    {user.bloodGroup}
+                    {user.bloodType}
                   </td>
                 </tr>
               ))

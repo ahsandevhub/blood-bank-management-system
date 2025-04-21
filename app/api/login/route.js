@@ -1,4 +1,5 @@
-import db from "@/app/lib/db.js";
+import dbConnect from "@/app/lib/db";
+import Admin from "@/app/models/admin";
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
 
@@ -6,56 +7,62 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
 export async function POST(req) {
   try {
-    // Parse the request body
+    await dbConnect();
+
     const { username, password } = await req.json();
 
-    // Validate required fields
     if (!username || !password) {
-      return new NextResponse(
-        JSON.stringify({ message: "Username and password are required" }),
+      return NextResponse.json(
+        { message: "Username and password are required" },
         { status: 400 }
       );
     }
 
-    // Query the database for the user
-    const [rows] = await db.execute("SELECT * FROM admins WHERE username = ?", [
-      username,
-    ]);
+    const admin = await Admin.findOne({ username });
 
-    // Check if the user exists
-    if (rows.length === 0) {
-      return new NextResponse(
-        JSON.stringify({ message: "Invalid username or password" }),
+    if (!admin) {
+      return NextResponse.json(
+        { message: "Invalid username or password" },
         { status: 401 }
       );
     }
 
-    const user = rows[0];
-
-    // Check the password directly (in plain text)
-    if (password !== user.password) {
-      return new NextResponse(
-        JSON.stringify({ message: "Invalid username or password" }),
+    if (password !== admin.password) {
+      return NextResponse.json(
+        { message: "Invalid username or password" },
         { status: 401 }
       );
     }
 
-    // Generate a JWT token
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: admin._id, username: admin.username },
       JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // Return the token and success message
-    return new NextResponse(
-      JSON.stringify({ message: "Login successful", token }),
-      { status: 200 }
-    );
+    const response = NextResponse.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: admin._id,
+        username: admin.username,
+      },
+    });
+
+    // Set cookie if you want
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 86400, // 1 day
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Login API error:", error);
-    return new NextResponse(
-      JSON.stringify({ message: "Internal server error" }),
+    return NextResponse.json(
+      { message: "Internal server error" },
       { status: 500 }
     );
   }

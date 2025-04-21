@@ -65,7 +65,7 @@ const NewRequestPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId: userData.id, bloodGroup, quantity }),
+        body: JSON.stringify({ userId: userData._id, bloodGroup, quantity }),
       });
 
       if (!response.ok) throw new Error("Failed to create request");

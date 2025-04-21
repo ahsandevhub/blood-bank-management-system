@@ -68,7 +68,7 @@ const UserProfilePage = () => {
                   Name
                 </th>
                 <td className="px-4 py-3 border text-gray-800">
-                  {userData?.fullName || "N/A"}
+                  {userData?.name || "N/A"}
                 </td>
               </tr>
               <tr className="border-b">
@@ -84,7 +84,7 @@ const UserProfilePage = () => {
                   Gender
                 </th>
                 <td className="px-4 py-3 border text-gray-800">
-                  {userData?.sex || "N/A"}
+                  {userData?.gender || "N/A"}
                 </td>
               </tr>
               <tr className="border-b">
@@ -92,7 +92,7 @@ const UserProfilePage = () => {
                   Blood Group
                 </th>
                 <td className="px-4 py-3 border text-gray-800">
-                  {userData?.bloodGroup || "N/A"}
+                  {userData?.bloodType || "N/A"}
                 </td>
               </tr>
               <tr className="border-b">

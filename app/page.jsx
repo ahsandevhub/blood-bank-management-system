@@ -26,18 +26,15 @@ const LoginPage = () => {
 
       const data = await response.json();
 
-      if (response.ok) {
-        setMessage("Login successful!");
-        // Store the token securely (e.g., in cookies or localStorage)
-        localStorage.setItem("adminToken", data.token);
-        // Redirect to the dashboard page after successful login
-        router.push("/dashboard");
-      } else {
-        setMessage(data.error || "Invalid credentials. Please try again.");
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
       }
+
+      // Store token and redirect
+      localStorage.setItem("adminToken", data.token);
+      router.push("/dashboard");
     } catch (error) {
-      console.error("Login error:", error);
-      setMessage("An error occurred. Please try again later.");
+      setMessage(error.message || "An error occurred during login");
     } finally {
       setLoading(false);
     }

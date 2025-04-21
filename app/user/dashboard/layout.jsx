@@ -65,8 +65,79 @@ const UserDashboardLayout = ({ children }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p>Loading...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+        {/* Heartbeat Monitor */}
+        <div className="relative w-full max-w-xl h-24">
+          {/* Line */}
+          <div className="absolute top-1/2 w-full border-t-2 border-red-300"></div>
+
+          {/* Heartbeat SVG Line */}
+          <svg
+            className="w-full h-full animate-heartbeat"
+            viewBox="0 0 500 100"
+            preserveAspectRatio="none"
+          >
+            <polyline
+              fill="none"
+              stroke="#dc2626"
+              strokeWidth="3"
+              points="0,50 50,50 70,20 90,80 110,50 200,50 220,30 240,70 260,50 500,50"
+            />
+          </svg>
+
+          {/* Blood Drop at Pulse */}
+          <div className="absolute left-[90px] top-[30px] animate-drop">
+            <div
+              className="w-4 h-6 bg-red-600 rounded-full transform rotate-180 drop-shadow-lg"
+              style={{
+                clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
+              }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Loading Text */}
+        <p className="mt-10 text-xl text-red-600 font-bold tracking-wide animate-pulse">
+          Checking vital signs...
+        </p>
+
+        {/* Custom animations */}
+        <style jsx>{`
+          @keyframes heartbeat {
+            0% {
+              stroke-dashoffset: 1000;
+            }
+            100% {
+              stroke-dashoffset: 0;
+            }
+          }
+
+          @keyframes drop {
+            0%,
+            70% {
+              opacity: 0;
+              transform: translateY(0) scale(1) rotate(180deg);
+            }
+            80% {
+              opacity: 1;
+              transform: translateY(0) scale(1.2) rotate(180deg);
+            }
+            100% {
+              opacity: 0;
+              transform: translateY(20px) scale(0.8) rotate(180deg);
+            }
+          }
+
+          .animate-heartbeat polyline {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: heartbeat 2s linear infinite;
+          }
+
+          .animate-drop {
+            animation: drop 2s infinite ease-in-out;
+          }
+        `}</style>
       </div>
     );
   }

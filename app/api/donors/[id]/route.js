@@ -1,4 +1,5 @@
-import db from "@/app/lib/db.js";
+import dbConnect from "@/app/lib/db";
+import Donor from "@/app/models/donor"; // Assuming you have the Donor model
 import { NextResponse } from "next/server";
 
 // Handle GET request for donor details
@@ -6,17 +7,24 @@ export async function GET(req, { params }) {
   const { id } = params;
 
   try {
-    const [rows] = await db.query("SELECT * FROM donors WHERE id = ?", [id]);
+    await dbConnect(); // Connect to MongoDB
 
-    if (rows.length === 0) {
-      return NextResponse.json({ error: "Donor not found" }, { status: 404 });
+    const donor = await Donor.findById(id);
+
+    if (!donor) {
+      return new NextResponse(JSON.stringify({ error: "Donor not found" }), {
+        status: 404,
+      });
     }
 
-    return NextResponse.json(rows[0], { status: 200 });
+    return NextResponse.json(donor, { status: 200 });
   } catch (error) {
     console.error("Error fetching donor details:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
+    return new NextResponse(
+      JSON.stringify({
+        error: "Internal Server Error",
+        details: error.message,
+      }),
       { status: 500 }
     );
   }
@@ -30,8 +38,10 @@ const phoneRegex = /^01[3-9]\d{8}$/;
 
 export async function PUT(req, { params }) {
   try {
+    await dbConnect(); // Connect to MongoDB
+
     // Parse the request body
-    const donor = await req.json();
+    const donorData = await req.json();
     const { id } = params; // Get the donor ID from the URL parameters
     const {
       name,
@@ -44,7 +54,7 @@ export async function PUT(req, { params }) {
       bloodType,
       medicalHistory,
       lastDonationDate,
-    } = donor;
+    } = donorData;
 
     // Validate required fields
     if (
@@ -57,7 +67,7 @@ export async function PUT(req, { params }) {
       !dob ||
       !bloodType
     ) {
-      return new Response(
+      return new NextResponse(
         JSON.stringify({ message: "All required fields must be provided" }),
         { status: 400 }
       );
@@ -65,9 +75,12 @@ export async function PUT(req, { params }) {
 
     // Validate email format
     if (!emailRegex.test(email)) {
-      return new Response(JSON.stringify({ message: "Invalid email format" }), {
-        status: 400,
-      });
+      return new NextResponse(
+        JSON.stringify({ message: "Invalid email format" }),
+        {
+          status: 400,
+        }
+      );
     }
 
     // Validate DOB (18+ years old)
@@ -79,7 +92,7 @@ export async function PUT(req, { params }) {
       age--;
     }
     if (age < 18) {
-      return new Response(
+      return new NextResponse(
         JSON.stringify({ message: "Donor must be at least 18 years old" }),
         { status: 400 }
       );
@@ -87,7 +100,7 @@ export async function PUT(req, { params }) {
 
     // Validate phone number format (Bangladeshi phone number)
     if (!phoneRegex.test(phone)) {
-      return new Response(
+      return new NextResponse(
         JSON.stringify({
           message:
             "Invalid phone number. It must start with '01' and contain 11 digits.",
@@ -109,10 +122,10 @@ export async function PUT(req, { params }) {
       }
     }
 
-    // Update the donor data in the MySQL database
-    const [result] = await db.execute(
-      "UPDATE donors SET name = ?, phone = ?, email = ?, city = ?, address = ?, gender = ?, dob = ?, bloodType = ?, medicalHistory = ?, lastDonationDate = ?, status = ? WHERE id = ?",
-      [
+    // Update the donor data in MongoDB
+    const updatedDonor = await Donor.findByIdAndUpdate(
+      id,
+      {
         name,
         phone,
         email,
@@ -121,30 +134,38 @@ export async function PUT(req, { params }) {
         gender,
         dob,
         bloodType,
-        medicalHistory || null,
-        lastDonationDate || null,
+        medicalHistory,
+        lastDonationDate,
         status,
-        id, // Donor ID to update
-      ]
+        updatedAt: Date.now(),
+      },
+      { new: true, runValidators: true } // runValidators ensures schema validations are applied
     );
 
-    // Check if the donor exists (no rows affected means donor not found)
-    if (result.affectedRows === 0) {
-      return new Response(JSON.stringify({ message: "Donor not found" }), {
+    // Check if the donor exists
+    if (!updatedDonor) {
+      return new NextResponse(JSON.stringify({ message: "Donor not found" }), {
         status: 404,
       });
     }
 
-    // Return a success response with a message
-    return new Response(
-      JSON.stringify({ message: "Donor updated successfully" }),
+    // Return a success response with the updated donor data
+    return new NextResponse(
+      JSON.stringify({
+        message: "Donor updated successfully",
+        data: updatedDonor,
+      }),
       { status: 200 }
     );
   } catch (error) {
-    console.error(error);
-    return new Response(JSON.stringify({ message: "Internal Server Error" }), {
-      status: 500,
-    });
+    console.error("Error updating donor:", error);
+    return new NextResponse(
+      JSON.stringify({
+        message: "Internal Server Error",
+        error: error.message,
+      }),
+      { status: 500 }
+    );
   }
 }
 
@@ -153,22 +174,29 @@ export async function DELETE(req, { params }) {
   const { id } = params;
 
   try {
-    // Delete the donor record from the database
-    const [result] = await db.query("DELETE FROM donors WHERE id = ?", [id]);
+    await dbConnect(); // Connect to MongoDB
+
+    // Delete the donor record from MongoDB
+    const deletedDonor = await Donor.findByIdAndDelete(id);
 
     // Check if the record was deleted
-    if (result.affectedRows === 0) {
-      return NextResponse.json({ error: "Donor not found" }, { status: 404 });
+    if (!deletedDonor) {
+      return new NextResponse(JSON.stringify({ error: "Donor not found" }), {
+        status: 404,
+      });
     }
 
-    return NextResponse.json(
-      { message: "Donor deleted successfully" },
+    return new NextResponse(
+      JSON.stringify({ message: "Donor deleted successfully" }),
       { status: 200 }
     );
   } catch (error) {
     console.error("Error deleting donor:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
+    return new NextResponse(
+      JSON.stringify({
+        error: "Internal Server Error",
+        details: error.message,
+      }),
       { status: 500 }
     );
   }

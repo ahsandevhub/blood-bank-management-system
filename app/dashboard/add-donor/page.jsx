@@ -1,6 +1,7 @@
 "use client";
 
 import axios from "axios";
+import Link from "next/link";
 import { useState } from "react";
 import { FaSpinner } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
@@ -85,8 +86,15 @@ const AddDonorPage = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <header className="bg-white p-4 shadow rounded-md">
+      <header className="bg-white p-4 shadow flex items-center justify-between rounded-md">
         <h1 className="text-2xl font-bold text-red-700">Add New Donor</h1>
+        <Link
+          href={"/dashboard/blood-stock"}
+          className={`px-6 py-2 col-span-2 text-center bg-red-500 text-white hover:bg-red-600 font-semibold rounded-lg shadow`}
+          disabled={loading}
+        >
+          Cancel
+        </Link>
       </header>
 
       {/* Donor Form */}

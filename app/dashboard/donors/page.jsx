@@ -107,7 +107,7 @@ const DonorsPage = () => {
           <tbody>
             {filteredDonors.length > 0 ? (
               filteredDonors.map((donor) => (
-                <tr key={donor.id} className="hover:bg-gray-100">
+                <tr key={donor._id} className="hover:bg-gray-100">
                   <td className="p-4 border border-gray-200">{donor.name}</td>
                   <td className="p-4 border border-gray-200">
                     {donor.bloodType}
@@ -125,21 +125,21 @@ const DonorsPage = () => {
                   <td className="p-4 text-center w-32 border border-gray-200">
                     <div className="flex justify-center gap-3">
                       <Link
-                        href={`/dashboard/donors/${donor.id}`}
+                        href={`/dashboard/donors/${donor._id}`}
                         className="bg-blue-200 border-blue-300 hover:bg-blue-600 hover:text-white transition-all border text-blue-600 px-3 py-2 rounded-md font-semibold flex items-center justify-center"
                         title="View"
                       >
                         <FaEye />
                       </Link>
                       <Link
-                        href={`/dashboard/donors/update/${donor.id}`}
+                        href={`/dashboard/donors/update/${donor._id}`}
                         className="bg-orange-200 border-orange-300 hover:bg-orange-600 hover:text-white transition-all border text-orange-600 px-3 py-2 rounded-md font-semibold flex items-center justify-center"
                         title="Update"
                       >
                         <FaEdit />
                       </Link>
                       <Link
-                        href={`/dashboard/donors/delete/${donor.id}`}
+                        href={`/dashboard/donors/delete/${donor._id}`}
                         className="bg-red-200 border-red-300 hover:bg-red-600 hover:text-white transition-all border text-red-600 px-3 py-2 rounded-md font-semibold flex items-center justify-center"
                         title="Delete"
                       >

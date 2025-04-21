@@ -108,7 +108,7 @@ const UserDashboardPage = () => {
       {/* Header Section */}
       <header className="bg-blue-700 text-white p-6 rounded-md shadow-md">
         <h1 className="text-2xl font-bold">
-          Welcome, {userData?.fullName || "User"}!
+          Welcome, {userData?.name || "User"}!
         </h1>
         <p className="mt-2 text-sm">
           Manage your blood donation activities effortlessly.
@@ -179,7 +179,7 @@ const UserDashboardPage = () => {
                 <tbody>
                   {donors.length > 0 ? (
                     donors.map((donor) => (
-                      <tr key={donor.id} className="hover:bg-gray-100">
+                      <tr key={donor._id} className="hover:bg-gray-100">
                         <td className="p-4 border border-gray-200">
                           {donor.name}
                         </td>

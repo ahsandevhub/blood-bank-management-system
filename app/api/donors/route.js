@@ -1,15 +1,16 @@
-import db from "@/app/lib/db.js";
+import dbConnect from "@/app/lib/db";
+import Donor from "@/app/models/donor"; // Adjust the import path as necessary
+import { NextResponse } from "next/server";
 
-// Regular expression to validate email format
+// Regular expressions (same as before)
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-// Regular expression to validate Bangladeshi phone number (must start with 01 and contain 11 digits)
 const phoneRegex = /^01[3-9]\d{8}$/;
 
 export async function POST(req) {
   try {
-    // Parse the request body
-    const donor = await req.json();
+    await dbConnect();
+    const donorData = await req.json();
+
     const {
       name,
       phone,
@@ -21,9 +22,9 @@ export async function POST(req) {
       bloodType,
       medicalHistory,
       lastDonationDate,
-    } = donor;
+    } = donorData;
 
-    // Validate required fields
+    // Validation (same as before)
     if (
       !name ||
       !phone ||
@@ -34,126 +35,102 @@ export async function POST(req) {
       !dob ||
       !bloodType
     ) {
-      return new Response(
-        JSON.stringify({ message: "All required fields must be provided" }),
+      return NextResponse.json(
+        { message: "All required fields must be provided" },
         { status: 400 }
       );
     }
 
-    // Validate email format
     if (!emailRegex.test(email)) {
-      return new Response(JSON.stringify({ message: "Invalid email format" }), {
-        status: 400,
-      });
+      return NextResponse.json(
+        { message: "Invalid email format" },
+        { status: 400 }
+      );
     }
 
-    // Validate DOB (18+ years old)
+    // Age validation
     const today = new Date();
     const birthDate = new Date(dob);
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
     if (age < 18) {
-      return new Response(
-        JSON.stringify({ message: "Donor must be at least 18 years old" }),
+      return NextResponse.json(
+        { message: "Donor must be at least 18 years old" },
         { status: 400 }
       );
     }
 
-    // Validate phone number format (Bangladeshi phone number)
     if (!phoneRegex.test(phone)) {
-      return new Response(
-        JSON.stringify({
+      return NextResponse.json(
+        {
           message:
-            "Invalid phone number. It must start with '01' and contain 11 digits.",
-        }),
+            "Invalid phone number. Must start with '01' and contain 11 digits",
+        },
         { status: 400 }
       );
     }
 
-    // Determine donor status based on last donation date
-    let status = "active"; // Default status is active
+    // Determine status
+    let status = "active";
     if (lastDonationDate) {
       const lastDonation = new Date(lastDonationDate);
-      const diffTime = today - lastDonation;
-      const diffDays = diffTime / (1000 * 3600 * 24); // Convert milliseconds to days
-
-      // If last donation was within 120 days, mark donor as inactive
-      if (diffDays <= 120) {
-        status = "inactive";
-      }
+      const diffDays = (today - lastDonation) / (1000 * 3600 * 24);
+      if (diffDays <= 120) status = "inactive";
     }
 
-    // Insert the donor data into the MySQL database
-    const [result] = await db.execute(
-      "INSERT INTO donors (name, phone, email, city, address, gender, dob, bloodType, medicalHistory, lastDonationDate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [
-        name,
-        phone,
-        email,
-        city,
-        address,
-        gender,
-        dob,
-        bloodType,
-        medicalHistory || null,
-        lastDonationDate || null,
-        status,
-      ]
-    );
+    // Create donor in MongoDB
+    const donor = await Donor.create({
+      name,
+      phone,
+      email,
+      city,
+      address,
+      gender,
+      dob,
+      bloodType,
+      medicalHistory: medicalHistory || null,
+      lastDonationDate: lastDonationDate || null,
+      status,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
-    // Return a success response with the inserted donor's ID
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         message: "Donor added successfully",
-        id: result.insertId,
-      }),
+        id: donor._id, // MongoDB uses _id instead of insertId
+      },
       { status: 201 }
     );
   } catch (error) {
     console.error(error);
-    return new Response(JSON.stringify({ message: "Internal Server Error" }), {
-      status: 500,
-    });
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET(req) {
   try {
-    // Extract query parameters (if any) for filtering, pagination, etc.
+    await dbConnect();
     const url = new URL(req.url);
     const bloodType = url.searchParams.get("bloodType");
     const city = url.searchParams.get("city");
 
-    // Base query to fetch all donors
-    let query = "SELECT * FROM donors";
-    let values = [];
+    // Build query object
+    const query = {};
+    if (bloodType) query.bloodType = bloodType;
+    if (city) query.city = city;
 
-    // Apply filters if bloodType or city is provided
-    if (bloodType || city) {
-      const filters = [];
-      if (bloodType) {
-        filters.push("bloodType = ?");
-        values.push(bloodType);
-      }
-      if (city) {
-        filters.push("city = ?");
-        values.push(city);
-      }
-      query += ` WHERE ${filters.join(" AND ")}`;
-    }
+    const donors = await Donor.find(query);
 
-    // Execute the query
-    const [rows] = await db.execute(query, values);
-
-    // Return the donor data
-    return new Response(JSON.stringify(rows), { status: 200 });
+    return NextResponse.json(donors, { status: 200 });
   } catch (error) {
     console.error(error);
-    return new Response(
-      JSON.stringify({ message: "Failed to fetch donor data" }),
+    return NextResponse.json(
+      { message: "Failed to fetch donor data" },
       { status: 500 }
     );
   }

@@ -38,8 +38,8 @@ const RequestPage = () => {
   }, []);
 
   const getUserName = (userId) => {
-    const user = users.find((user) => user.id === userId);
-    return user ? user.fullName : "Unknown User";
+    const user = users.find((user) => user._id === userId);
+    return user ? user.name : "Unknown User";
   };
 
   const filteredRequests = requests.filter((request) => {
@@ -48,9 +48,7 @@ const RequestPage = () => {
       request.status.toLowerCase() === statusFilter.toLowerCase();
     const matchesBloodGroup =
       bloodGroupFilter === "" ||
-      request.blood_group
-        .toLowerCase()
-        .includes(bloodGroupFilter.toLowerCase());
+      request.bloodGroup.toLowerCase().includes(bloodGroupFilter.toLowerCase());
     const matchesSearch = getUserName(request.userId)
       .toLowerCase()
       .includes(search.toLowerCase());
@@ -77,10 +75,10 @@ const RequestPage = () => {
         throw new Error(result.message || "Failed to approve request");
       }
 
-      // Update the local state to reflect the status change
+      // Update the local state to reflect the status change and updatedRequest
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
-          req.id === id ? { ...req, status: "Approved" } : req
+          req._id === id ? { ...req, status: "approved" } : req
         )
       );
 
@@ -98,6 +96,7 @@ const RequestPage = () => {
     try {
       const response = await fetch(`/api/requests/${id}/decline`, {
         method: "PUT",
+
         headers: {
           "Content-Type": "application/json",
         },
@@ -111,7 +110,7 @@ const RequestPage = () => {
 
       setRequests((prevRequests) =>
         prevRequests.map((request) =>
-          request.id === id ? { ...request, status: "Declined" } : request
+          request._id === id ? { ...request, status: "Declined" } : request
         )
       );
 
@@ -127,8 +126,79 @@ const RequestPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div>Loading...</div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+        {/* Heartbeat Monitor */}
+        <div className="relative w-full max-w-xl h-24">
+          {/* Line */}
+          <div className="absolute top-1/2 w-full border-t-2 border-red-300"></div>
+
+          {/* Heartbeat SVG Line */}
+          <svg
+            className="w-full h-full animate-heartbeat"
+            viewBox="0 0 500 100"
+            preserveAspectRatio="none"
+          >
+            <polyline
+              fill="none"
+              stroke="#dc2626"
+              strokeWidth="3"
+              points="0,50 50,50 70,20 90,80 110,50 200,50 220,30 240,70 260,50 500,50"
+            />
+          </svg>
+
+          {/* Blood Drop at Pulse */}
+          <div className="absolute left-[90px] top-[30px] animate-drop">
+            <div
+              className="w-4 h-6 bg-red-600 rounded-full transform rotate-180 drop-shadow-lg"
+              style={{
+                clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
+              }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Loading Text */}
+        <p className="mt-10 text-xl text-red-600 font-bold tracking-wide animate-pulse">
+          Checking vital signs...
+        </p>
+
+        {/* Custom animations */}
+        <style jsx>{`
+          @keyframes heartbeat {
+            0% {
+              stroke-dashoffset: 1000;
+            }
+            100% {
+              stroke-dashoffset: 0;
+            }
+          }
+
+          @keyframes drop {
+            0%,
+            70% {
+              opacity: 0;
+              transform: translateY(0) scale(1) rotate(180deg);
+            }
+            80% {
+              opacity: 1;
+              transform: translateY(0) scale(1.2) rotate(180deg);
+            }
+            100% {
+              opacity: 0;
+              transform: translateY(20px) scale(0.8) rotate(180deg);
+            }
+          }
+
+          .animate-heartbeat polyline {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: heartbeat 2s linear infinite;
+          }
+
+          .animate-drop {
+            animation: drop 2s infinite ease-in-out;
+          }
+        `}</style>
       </div>
     );
   }
@@ -195,19 +265,19 @@ const RequestPage = () => {
               </tr>
             ) : (
               filteredRequests.map((request) => (
-                <tr key={request.id} className="hover:bg-gray-100">
+                <tr key={request._id} className="hover:bg-gray-100">
                   <td className="px-4 border text-center border-gray-200">
-                    {request.id}
+                    {request._id.toString().slice(-8).toUpperCase()}
                   </td>
                   <td className="py-4 border text-center border-gray-200">
-                    {new Date(request.request_time).toLocaleString()}
+                    {new Date(request.createdAt).toLocaleString()}
                   </td>
 
                   <td className="px-4 border border-gray-200">
                     {getUserName(request.userId)}
                   </td>
                   <td className="px-4 border text-center border-gray-200">
-                    {request.blood_group}
+                    {request.bloodGroup}
                   </td>
                   <td className="px-4 border text-center border-gray-200">
                     {request.quantity}
@@ -241,8 +311,8 @@ const RequestPage = () => {
                           className="px-3 text-sm py-1 flex items-center gap-1 font-medium hover:text-white rounded-full bg-blue-600 text-white border border-blue-600 cursor-pointer hover:bg-blue-700"
                           onClick={() =>
                             handleApprove(
-                              request.id,
-                              request.blood_group,
+                              request._id,
+                              request.bloodGroup,
                               request.quantity
                             )
                           }
@@ -252,14 +322,14 @@ const RequestPage = () => {
                         </button>
                         <button
                           className="px-3 text-sm py-1 flex items-center gap-1 font-medium hover:text-white rounded-full bg-red-600 text-white border border-red-600 cursor-pointer hover:bg-red-700"
-                          onClick={() => handleDecline(request.id)}
+                          onClick={() => handleDecline(request._id)}
                         >
                           <LiaTimesSolid />
                           Decline
                         </button>
                       </div>
                     ) : (
-                      <p className="italic text-center text-red-500">
+                      <p className="italic text-center text-gray-500">
                         No action required!
                       </p>
                     )}
