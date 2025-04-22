@@ -80,6 +80,7 @@ const LoginPage = () => {
               id="phone"
               name="phone"
               value={phone}
+              placeholder="017XXXXXXXX"
               onChange={(e) => setPhone(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -97,6 +98,7 @@ const LoginPage = () => {
               id="password"
               name="password"
               value={password}
+              placeholder="********"
               onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

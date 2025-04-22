@@ -253,7 +253,7 @@ const RequestPage = () => {
               <th className="p-4 border border-gray-200">Blood Group</th>
               <th className="p-4 border border-gray-200">Quantity (Units)</th>
               <th className="p-4 border border-gray-200">Status</th>
-              <th className="p-4 border border-gray-200 w-[300px]">Actions</th>
+              <th className="p-4 border border-gray-200">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -288,7 +288,7 @@ const RequestPage = () => {
                         request.status === "pending"
                           ? "text-orange-600 bg-orange-100 border-orange-400"
                           : request.status === "approved"
-                          ? "text-emerald-600 bg-emerald-100 border-emerald-600"
+                          ? "text-emerald-600 bg-emerald-100 border-green-500"
                           : "text-red-600 bg-red-100 border-red-400"
                       }`}
                     >

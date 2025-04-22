@@ -198,7 +198,7 @@ const RequestPage = () => {
                         request.status === "pending"
                           ? "text-orange-600 bg-orange-100 border-orange-500"
                           : request.status === "approved"
-                          ? "text-emerald-600 bg-emerald-100 border-emerald-500"
+                          ? "text-emerald-600 bg-emerald-100 border-green-500"
                           : "text-rose-600 bg-rose-100 border-rose-400"
                       }`}
                     >
