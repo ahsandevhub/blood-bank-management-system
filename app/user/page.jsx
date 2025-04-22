@@ -46,9 +46,17 @@ const LoginPage = () => {
 
   return (
     <div
-      className="min-h-screen bg-gray-100 flex items-center justify-center bg-no-repeat bg-cover"
+      className="min-h-screen relative bg-gray-100 flex items-center justify-center bg-no-repeat bg-cover"
       style={{ backgroundImage: "url('../images/bg2.png')" }}
     >
+      <div className="absolute top-0 right-0 z-50 m-5">
+        <Link
+          href="/"
+          className="bg-red-600 text-white rounded-md px-4 py-2 hover:bg-red-700 transition duration-200"
+        >
+          Admin Login
+        </Link>
+      </div>
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-700 opacity-50"></div>
       <div className="relative z-10 bg-white/90 shadow-lg rounded-lg p-8 w-full max-w-md">
         <h2 className="text-2xl font-bold text-center text-blue-700 mb-3">
